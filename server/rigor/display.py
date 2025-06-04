@@ -14,6 +14,10 @@ class Display:
     the `on_input` and `render` methods to provide specific display behavior.
     """
 
+    def on_client_state(self, state: bool) -> None:
+        _ = state
+        raise NotImplementedError()
+
     def on_input(self, action: EncoderAction) -> None:
         """
         Handles encoder input actions.

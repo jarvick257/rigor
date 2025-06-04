@@ -83,6 +83,12 @@ class Screen(Generic[T], Display):
         """
         pass
 
+    def on_client_state(self, state: bool) -> None:
+        if state:
+            self.on_client_connected()
+        else:
+            self.on_client_disconnected()
+
     def on_input(self, action: EncoderAction) -> None:
         """
         Handles encoder input actions.
@@ -102,6 +108,18 @@ class Screen(Generic[T], Display):
     def on_nop(self) -> None:
         """
         Handles the "No Operation" encoder action.
+        """
+        pass
+
+    def on_client_connected(self) -> None:
+        """
+        Handles client connected event
+        """
+        pass
+
+    def on_client_disconnected(self) -> None:
+        """
+        Handles client disconnected event
         """
         pass
 

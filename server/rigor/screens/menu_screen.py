@@ -25,7 +25,7 @@ class MenuScreen(Screen[T]):
         self._counter = 0
 
     def render(self) -> Content:
-        return Content(self.title, self._options[self._counter])
+        return Content(self.title, self.selection)
 
     def on_next(self):
         self._counter = (self._counter + 1) % len(self._options)

@@ -1,8 +1,7 @@
-from typing import Callable, Any, Optional
+from typing import Any
 
 from .encoder import EncoderAction
 from .display import Display
-from .content import Content
 from .display_update import DisplayUpdate
 from .input_handler import InputHandler
 from .renderer import Renderer
@@ -14,11 +13,16 @@ class App:
         self.renderer: Renderer = renderer
         self.input_handler = input_handler
         self.input_handler.on_input(self._on_input)
+        self.input_handler.on_client_state(self._on_client_state)
         self.module: Module | None = None
 
     def _on_input(self, action: EncoderAction) -> None:
         if self.module is not None:
             self.module.on_input(action)
+
+    def _on_client_state(self, state: bool) -> None:
+        if self.module is not None:
+            self.module.on_client_state(state)
 
     def _on_module_update(
         self,

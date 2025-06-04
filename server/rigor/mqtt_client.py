@@ -18,19 +18,29 @@ class MqttClient(InputHandler, Renderer):
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
         self._input_callback: Callable[[EncoderAction], None] = lambda _: None
+        self._state_callback: Callable[[bool], None] = lambda _: None
         self._content: Content | None = None
 
     def _on_message(self, client, userdata, message) -> None:
         _, _ = client, userdata
-        if message.topic == MQTT_INPUT_TOPIC:
+        parts = message.topic.split("/")
+        if len(parts) != 3 or parts[0] != "rigor":
+            logger.error("Message topic must be rigor/<topic>/<client_id>")
+        _, topic, client_id = parts
+        if topic == MQTT_INPUT_TOPIC.split("/")[1]:
             action = EncoderAction[message.payload.decode()]
             logger.info(f"Received action {action}")
             self._input_callback(action)
+        elif topic == MQTT_STATE_TOPIC.split("/")[1]:
+            state = message.payload.decode()
+            logger.info(f"Client {client_id} is {state}")
+            self._state_callback(state == "ON")
 
     def _on_connect(self, client, userdata, flags, rc) -> None:
         logger.info(f"Connected")
         _, _, _, _ = client, userdata, flags, rc
         self._client.subscribe(MQTT_INPUT_TOPIC)
+        self._client.subscribe(MQTT_STATE_TOPIC)
         self._publish_content()
 
     def _publish_content(self) -> None:
@@ -43,6 +53,9 @@ class MqttClient(InputHandler, Renderer):
 
     def on_input(self, callback: Callable[[EncoderAction], None]):
         self._input_callback = callback
+
+    def on_client_state(self, callback: Callable[[bool], None]):
+        self._state_callback = callback
 
     def render(self, content: Content):
         self._content = content

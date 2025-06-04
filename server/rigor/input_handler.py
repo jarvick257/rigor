@@ -8,5 +8,9 @@ class InputHandler:
         _ = callback
         raise NotImplementedError()
 
+    def on_client_state(self, callback: Callable[[bool], None]) -> None:
+        _ = callback
+        raise NotImplementedError()
+
     def run(self) -> None:
         raise NotImplementedError()

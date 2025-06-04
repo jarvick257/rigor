@@ -69,6 +69,10 @@ class Module(Generic[T], Display):
         assert len(self.stack) > 0
         return self.stack[-1]
 
+    def on_client_state(self, state: bool) -> None:
+        for disp in self.stack:
+            disp.on_client_state(state)
+
     def on_input(self, action: EncoderAction) -> None:
         """
         Handles input from the rotary encoder and sends it to the topmost display in the stack.

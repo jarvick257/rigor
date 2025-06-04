@@ -11,8 +11,6 @@
 #include "Display.h"
 #include "RotaryEncoder.h"
 
-#define DEVICE_NAME "rigor/client"
-
 #define CLK    D6
 #define DT     D7
 #define SW     D4
@@ -20,6 +18,10 @@
 Display display{};
 RotaryEncoder encoder{CLK, DT, SW};
 EspMQTTClient mqtt(WIFI_SSID, WIFI_PSK, BROKER_IP, DEVICE_NAME);
+
+#define STATE_TOPIC "rigor/state/"  DEVICE_NAME
+#define INPUT_TOPIC "rigor/input/" DEVICE_NAME
+#define SCREEN_TOPIC "rigor/screen"
 
 void handleRotaryInput() {
   auto rotation = encoder.getRotation();
@@ -31,14 +33,14 @@ void handleRotaryInput() {
   else if (rotation == 1) action = "NEXT";
 
   if(action == nullptr) return;
-  mqtt.publish("rigor/input", String(action), false);
+  mqtt.publish(INPUT_TOPIC, String(action), false);
   Serial.print("Published ");
   Serial.println(String(action));
 }
 
 void onConnectionEstablished() {
   Serial.println("MQTT Connected");
-  mqtt.subscribe("rigor/screen", [](const String &payload) {
+  mqtt.subscribe(SCREEN_TOPIC, [](const String &payload) {
     Serial.print("Screen: ");
     Serial.println(String(payload));
 
@@ -46,6 +48,7 @@ void onConnectionEstablished() {
     deserializeJson(doc, payload);
     display.update(doc["title"], doc["body"]);
   });
+  mqtt.publish(STATE_TOPIC, "ON");
 }
 
 void setup() {
@@ -53,28 +56,20 @@ void setup() {
   Serial.begin(9600);
 
   display.init();
-  display.update("RIGOR", "Welcome");
+  display.update("RIGOR", "v0.0.1");
   display.show();
   Serial.println("Setup complete, starting loop...");
+
   mqtt.setKeepAlive(60);
+  mqtt.enableLastWillMessage(STATE_TOPIC, "OFF");
 }
 
 void loop() {
-  static bool was_connected = false;
   mqtt.loop();
 
   if (false == mqtt.isMqttConnected()) {
-    display.update("RIGOR", "Connecting");
-    display.show();
     delay(100);
     return;
-  }
-
-  if(!was_connected){
-    display.update("RIGOR", "Welcome");
-    display.show();
-    delay(1000);
-    was_connected = true;
   }
 
   // Handle rotary encoder input
