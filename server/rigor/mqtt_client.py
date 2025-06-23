@@ -8,6 +8,7 @@ from .content import Content
 from .input_handler import InputHandler
 from .renderer import Renderer
 from .const import *
+from threading import Timer
 
 
 class MqttClient(InputHandler, Renderer):
@@ -20,6 +21,7 @@ class MqttClient(InputHandler, Renderer):
         self._input_callback: Callable[[EncoderAction], None] = lambda _: None
         self._state_callback: Callable[[bool], None] = lambda _: None
         self._content: Content | None = None
+        self._disconnect_timer: Timer | None = None
 
     def _on_message(self, client, userdata, message) -> None:
         _, _ = client, userdata
@@ -34,7 +36,11 @@ class MqttClient(InputHandler, Renderer):
         elif topic == MQTT_STATE_TOPIC.split("/")[1]:
             state = message.payload.decode()
             logger.info(f"Client {client_id} is {state}")
-            self._state_callback(state == "ON")
+            if state == "ON":
+                self._cancel_disconnect_timer()
+                self._state_callback(True)
+            elif state == "OFF":
+                self._start_disconnect_timer()
 
     def _on_connect(self, client, userdata, flags, rc) -> None:
         logger.info(f"Connected")
@@ -42,6 +48,21 @@ class MqttClient(InputHandler, Renderer):
         self._client.subscribe(MQTT_INPUT_TOPIC)
         self._client.subscribe(MQTT_STATE_TOPIC)
         self._publish_content()
+
+    def _start_disconnect_timer(self):
+        self._cancel_disconnect_timer()
+        self._disconnect_timer = Timer(30, self._on_client_disconnected)
+        self._disconnect_timer.start()
+
+    def _cancel_disconnect_timer(self) -> None:
+        if self._disconnect_timer is None:
+            return
+        self._disconnect_timer.cancel()
+        self._disconnect_timer = None
+
+    def _on_client_disconnected(self) -> None:
+        self._state_callback(False)
+        self._cancel_disconnect_timer()
 
     def _publish_content(self) -> None:
         if self._content == None or not self._client.is_connected:

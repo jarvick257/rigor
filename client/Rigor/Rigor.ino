@@ -69,6 +69,7 @@ void loop() {
 
   if (false == mqtt.isMqttConnected()) {
     delay(100);
+    display.show();
     return;
   }
 

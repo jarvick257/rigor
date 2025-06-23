@@ -4,20 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-rigor"
-version = "0.0.2"
+version = "0.5"
 authors = [
   { name="jarvick257" },
 ]
 dependencies=["loguru", "paho-mqtt"]
 description = "Project RIGOR - The Remote IGOR"
-readme = "../README.md"
+readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
 ]
 license = "MIT"
-license-files = ["../LICENSE"]
+license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://github.com/jarvick257/rigor"
