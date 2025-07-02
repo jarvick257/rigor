@@ -79,6 +79,8 @@ class MqttClient(InputHandler, Renderer):
         self._state_callback = callback
 
     def render(self, content: Content):
+        if self._content == content:
+            return
         self._content = content
         self._publish_content()
 
